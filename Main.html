@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Weather App 🌤️</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: linear-gradient(to bottom, #a1c4fd, #c2e9fb);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      background-color: #4CAF50;
+      color: white;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    #weather {
+      margin-top: 20px;
+      background-color: rgba(255,255,255,0.7);
+      padding: 20px;
+      border-radius: 10px;
+      width: 250px;
+    }
+
+    #weather img {
+      width: 50px;
+      height: 50px;
+    }
+
+    #error {
+      color: red;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Weather App 🌤️</h1>
+  <button id="getWeather">Get My Weather</button>
+  <div id="weather"></div>
+  <div id="error"></div>
+
+  <script>
+    async function getWeather(lat, lon) {
+      const weatherDiv = document.getElementById("weather");
+      const errorDiv = document.getElementById("error");
+      weatherDiv.textContent = "Loading... 🌥️";
+      errorDiv.textContent = "";
+
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error("Failed to fetch weather");
+        const data = await resp.json();
+
+        const temp = data.current_weather.temperature;
+        const wind = data.current_weather.windspeed;
+        const weatherCode = data.current_weather.weathercode;
+
+        // Simple mapping of weather codes to emoji
+        const codeMap = {
+          0: "☀️ Clear",
+          1: "🌤️ Mainly Clear",
+          2: "⛅ Partly Cloudy",
+          3: "☁️ Cloudy",
+          45: "🌫️ Fog",
+          48: "🌫️ Depositing Rime Fog",
+          51: "🌦️ Drizzle",
+          53: "🌦️ Drizzle",
+          55: "🌦️ Drizzle",
+          61: "🌧️ Rain",
+          63: "🌧️ Rain",
+          65: "🌧️ Heavy Rain",
+          71: "🌨️ Snow",
+          73: "🌨️ Snow",
+          75: "❄️ Heavy Snow",
+          80: "🌦️ Rain Showers",
+          81: "🌦️ Rain Showers",
+          82: "⛈️ Heavy Showers",
+          95: "⛈️ Thunderstorm",
+          99: "🌩️ Hailstorm"
+        };
+
+        weatherDiv.innerHTML = `
+          <h2>Temperature: ${temp}°C</h2>
+          <p>Wind Speed: ${wind} km/h</p>
+          <p>Weather: ${codeMap[weatherCode] || "🌤️ Unknown"}</p>
+        `;
+      } catch (err) {
+        errorDiv.textContent = "Error fetching weather: " + err.message;
+        weatherDiv.textContent = "";
+      }
+    }
+
+    document.getElementById("getWeather").addEventListener("click", () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            getWeather(lat, lon);
+          },
+          (error) => {
+            document.getElementById("error").textContent = "Permission denied or location unavailable.";
+          }
+        );
+      } else {
+        document.getElementById("error").textContent = "Geolocation not supported by your browser.";
+      }
+    });
+  </script>
+</body>
+</html>
